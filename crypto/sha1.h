@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <functional>
 #include <string>
-#include<vector>
+#include <vector>
 
 namespace crypto {
 	class SHA1 {

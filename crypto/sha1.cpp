@@ -4,7 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
-#include "crypto.h"
+#include "sha1.h"
 
 namespace {
 	constexpr int SHA1_BLOCK_SIZE_BITS = 512 ;

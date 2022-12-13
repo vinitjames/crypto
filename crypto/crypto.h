@@ -3,8 +3,11 @@
 
 #pragma once
 
-#include <iostream>
+#include <array>
+#include <cstdint>
 #include <functional>
+#include <string>
+#include<vector>
 
 namespace crypto {
 	class SHA1 {
@@ -26,8 +29,8 @@ namespace crypto {
 
 			std::array<std::uint32_t, 5> work_var{ digest };
 
-			static std::uint32_t func(std::uint32_t x, std::uint32_t y, std::uint32_t z, std::size_t counter);
-			static std::uint32_t get_const(std::size_t counter);
+			static std::uint32_t f(std::uint32_t x, std::uint32_t y, std::uint32_t z, std::size_t index);
+			static std::uint32_t K(std::size_t index);
 		public:
 			void operator () (const std::vector<std::uint8_t>& block);
 			std::vector<std::uint32_t> get_digest();
@@ -36,7 +39,7 @@ namespace crypto {
 		void clear_block_buffer();
 		void append_length_to_block_buffer(std::uint64_t size);
 		std::vector<std::uint8_t> block_buffer;
-		std::size_t block_buffer_counter = 0;
+		std::size_t block_buffer_index = 0;
 		
 	};
 }

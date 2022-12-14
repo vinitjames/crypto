@@ -1,7 +1,8 @@
 #include "sha256.h"
-
+#include "util.h"
 #include <algorithm>
 #include <stdexcept>
+#include <iostream>
 
 namespace {
 constexpr int SHA256_BLOCK_SIZE_BITS = 512;
@@ -9,12 +10,6 @@ constexpr int SHA256_BLOCK_SIZE_BYTES = SHA256_BLOCK_SIZE_BITS / 8;
 constexpr int SHA256_LENGTH_SIZE_BITS = 64;
 constexpr int SHA256_LENGTH_SIZE_BYTES = SHA256_LENGTH_SIZE_BITS / 8;
 
-std::uint32_t ROTR(std::uint32_t value, std::uint8_t pos) {
-  return (value >> pos) | (value << (32 - pos));
-}
-std::uint32_t SHR(std::uint32_t value, std::uint8_t pos) {
-  return value >> pos;
-}
 }  // namespace
 
 namespace crypto {
@@ -113,16 +108,16 @@ std::uint32_t SHA256::BlockHash::Maj(std::uint32_t x, std::uint32_t y,
   return (x & y) ^ (x & z) ^ (y & z);
 }
 std::uint32_t SHA256::BlockHash::Ep0(std::uint32_t x) {
-  return ROTR(x, 2) ^ ROTR(x, 13) ^ ROTR(x, 22);
+  return util::ROTR(x, 2) ^ util::ROTR(x, 13) ^ util::ROTR(x, 22);
 }
 std::uint32_t SHA256::BlockHash::Ep1(std::uint32_t x) {
-  return ROTR(x, 6) ^ ROTR(x, 11) ^ ROTR(x, 25);
+  return util::ROTR(x, 6) ^ util::ROTR(x, 11) ^ util::ROTR(x, 25);
 }
 std::uint32_t SHA256::BlockHash::Sig0(std::uint32_t x) {
-  return ROTR(x, 7) ^ ROTR(x, 18) ^ SHR(x, 3);
+  return util::ROTR(x, 7) ^ util::ROTR(x, 18) ^ util::SHR(x, 3);
 }
 std::uint32_t SHA256::BlockHash::Sig1(std::uint32_t x) {
-  return ROTR(x, 17) ^ ROTR(x, 19) ^ SHR(x, 10);
+  return util::ROTR(x, 17) ^ util::ROTR(x, 19) ^ util::SHR(x, 10);
 }
 
 }  // namespace crypto

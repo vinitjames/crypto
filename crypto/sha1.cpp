@@ -1,7 +1,7 @@
 ﻿// crypto.cpp : Defines the entry point for the application.
 //
 #include "sha1.h"
-
+#include "util.h"
 #include <algorithm>
 #include <array>
 #include <stdexcept>
@@ -13,9 +13,6 @@ constexpr int SHA1_BLOCK_SIZE_BYTES = SHA1_BLOCK_SIZE_BITS / 8;
 constexpr int SHA1_LENGTH_SIZE_BITS = 64;
 constexpr int SHA1_LENGTH_SIZE_BYTES = SHA1_LENGTH_SIZE_BITS / 8;
 
-std::uint32_t ROTL(std::uint32_t value, std::uint8_t pos) {
-  return (value << pos) | (value >> (32 - pos));
-}
 }  // namespace
 namespace crypto {
 SHA1::SHA1() : block_buffer(SHA1_BLOCK_SIZE_BYTES){};
@@ -79,14 +76,14 @@ void SHA1::BlockHash::operator()(const std::vector<std::uint8_t>& block) {
       W[t] = (block[t * 4] << 24) | (block[t * 4 + 1] << 16) |
              (block[t * 4 + 2] << 8) | (block[t * 4 + 3]);
     } else {
-      W[t] = ROTL(W[t - 3] ^ W[t - 8] ^ W[t - 14] ^ W[t - 16], 1);
+      W[t] = util::ROTL(W[t - 3] ^ W[t - 8] ^ W[t - 14] ^ W[t - 16], 1);
     }
-    std::uint32_t temp = ROTL(work_var[0], 5) +
+    std::uint32_t temp = util::ROTL(work_var[0], 5) +
                          f(work_var[1], work_var[2], work_var[3], t) +
                          work_var[4] + K(t) + W[t];
     work_var[4] = work_var[3];
     work_var[3] = work_var[2];
-    work_var[2] = ROTL(work_var[1], 30);
+    work_var[2] = util::ROTL(work_var[1], 30);
     work_var[1] = work_var[0];
     work_var[0] = temp;
     t++;

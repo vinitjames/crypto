@@ -41,8 +41,9 @@ namespace crypto {
 
 		public:
 			void operator () (const std::vector<std::uint8_t>& block);
-			std::vector<std::uint32_t> get_digest();
+			std::vector<std::uint32_t> get_digest() const;
 		};
+
 		void update_block_buffer(const std::string& message, std::size_t pos);
 		void clear_block_buffer();
 		void append_length_to_block_buffer(std::uint64_t size);

@@ -1,5 +1,7 @@
 #include <stdexcept>
+#include <algorithm>
 #include "sha256.h"
+
 
 namespace {
 	constexpr int SHA256_BLOCK_SIZE_BITS = 512;
@@ -67,5 +69,58 @@ namespace crypto {
 		}
 	}
 
+	std::vector<std::uint32_t> SHA256::BlockHash::get_digest() const {
+		return std::vector<std::uint32_t>{digest.begin(), digest.end()};
+	}
 
+	void SHA256::BlockHash::operator()(const std::vector<std::uint8_t>& block) {
+		std::size_t t = 0;
+		std::copy(digest.begin(), digest.end(), work_var.begin());
+		while (t < 64) {
+			if (t < 16) {
+				W[t] = (block[t * 4] << 24)
+					| (block[t * 4 + 1] << 16)
+					| (block[t * 4 + 2] << 8)
+					| (block[t * 4 + 3]);
+			}
+			else {
+				W[t] = Sig1(W[t-2]) + W[t-7] + Sig0(W[t-15]) + W[t-16];
+			}
+			std::uint32_t temp1 = work_var[7] + Ep1(work_var[4]) + Ch(work_var[4], work_var[5], work_var[6]) 
+				+ K[t] + W[t];
+			std::uint32_t temp2 = Ep0(work_var[0]) + Maj(work_var[0], work_var[1], work_var[2]);
+			work_var[7] = work_var[6];
+			work_var[6] = work_var[5];
+			work_var[5] = work_var[4];
+			work_var[4] = work_var[3] + temp1;
+			work_var[3] = work_var[2];
+			work_var[2] = work_var[1];
+			work_var[1] = work_var[0];
+			work_var[0] = temp1 + temp2;
+			t++;
+		}
+		std::transform(work_var.begin(), work_var.end(), digest.begin(), digest.begin(), std::plus<>{});
+	}
+	std::uint32_t SHA256::BlockHash::Ch(std::uint32_t x, std::uint32_t y, std::uint32_t z) {
+		return (x & y) ^ (~x & z);
+	}
+
+	std::uint32_t SHA256::BlockHash::Maj(std::uint32_t x, std::uint32_t y, std::uint32_t z) {
+		return (x & y) ^ (x & z) ^ (y & z);
+	}
+	std::uint32_t SHA256::BlockHash::Ep0(std::uint32_t x) {
+		return ROTR(x, 2) ^ ROTR(x, 13) ^ ROTR(x, 22);
+	}
+	std::uint32_t SHA256::BlockHash::Ep1(std::uint32_t x) {
+		return ROTR(x, 6) ^ ROTR(x, 11) ^ ROTR(x, 25);
+	}
+	std::uint32_t SHA256::BlockHash::Sig0(std::uint32_t x) {
+		return ROTR(x, 7) ^ ROTR(x, 18) ^ SHR(x, 3);
+	}
+	std::uint32_t SHA256::BlockHash::Sig1(std::uint32_t x) {
+		return ROTR(x, 17) ^ ROTR(x, 19) ^ SHR(x, 10);
+	}
+	
 }
+
+

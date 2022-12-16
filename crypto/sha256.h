@@ -5,16 +5,25 @@
 #include <string>
 #include <vector>
 
+#include "block_buffer.h"
+
 namespace crypto {
+
 class SHA256 {
  public:
-  SHA256();
+  SHA256() = default;
+  SHA256(const std::array<std::uint32_t, 8>& initial_digest);
   std::vector<std::uint32_t> get_digest(const std::string& message);
 
  private:
   class BlockHash {
-    std::array<std::uint32_t, 64> W;
+   public:
+    void operator()(const std::vector<std::uint8_t>& block);
+    std::vector<std::uint32_t> get_digest() const;
+    void set_digest(const std::array<std::uint32_t, 8>& new_digest);
 
+   private:
+    std::array<std::uint32_t, 64> W;
     std::array<std::uint32_t, 8> digest{0x6a09e667, 0xbb67ae85, 0x3c6ef372,
                                         0xa54ff53a, 0x510e527f, 0x9b05688c,
                                         0x1f83d9ab, 0x5be0cd19};
@@ -40,16 +49,8 @@ class SHA256 {
     static std::uint32_t Ep1(std::uint32_t x);
     static std::uint32_t Sig0(std::uint32_t x);
     static std::uint32_t Sig1(std::uint32_t x);
-
-   public:
-    void operator()(const std::vector<std::uint8_t>& block);
-    std::vector<std::uint32_t> get_digest() const;
   };
-
-  void update_block_buffer(const std::string& message, std::size_t pos);
-  void clear_block_buffer();
-  void append_length_to_block_buffer(std::uint64_t size);
-  std::vector<std::uint8_t> block_buffer;
-  std::size_t block_buffer_index = 0;
+  BlockBuffer512 block_buffer;
+  BlockHash block_hash;
 };
 }  // namespace crypto

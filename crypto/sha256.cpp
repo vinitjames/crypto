@@ -1,8 +1,10 @@
 #include "sha256.h"
-#include "util.h"
+
 #include <algorithm>
-#include <stdexcept>
 #include <iostream>
+#include <stdexcept>
+
+#include "util.h"
 
 namespace {
 constexpr int SHA256_BLOCK_SIZE_BITS = 512;
@@ -13,63 +15,46 @@ constexpr int SHA256_LENGTH_SIZE_BYTES = SHA256_LENGTH_SIZE_BITS / 8;
 }  // namespace
 
 namespace crypto {
-SHA256::SHA256() : block_buffer(SHA256_BLOCK_SIZE_BYTES){};
+// SHA256::SHA256() : block_buffer(SHA256_BLOCK_SIZE_BYTES){};
+SHA256::SHA256(const std::array<std::uint32_t, 8>& initial_digest) {
+  block_hash.set_digest(initial_digest);
+}
 
 std::vector<std::uint32_t> SHA256::get_digest(const std::string& message) {
   if (message.size() > ((uint64_t)1 << 61)) {
     throw std::invalid_argument(
-        "get_digest: SHA1 cannot work with message size of more than 2^64 "
+        "get_digest: SHA256 cannot work with message size of more than 2^64 "
         "bits");
   }
-  BlockHash block_hash;
+  // BlockHash block_hash;
   std::size_t pos = 0;
   while (pos < message.size()) {
-    update_block_buffer(message, pos);
-    if (block_buffer_index < SHA256_BLOCK_SIZE_BYTES) break;
-    block_hash(block_buffer);
+    block_buffer.update(message, pos);
+    if (block_buffer.buffer_index() < SHA256_BLOCK_SIZE_BYTES) break;
+    block_hash(block_buffer.get_buffer());
     pos += SHA256_BLOCK_SIZE_BYTES;
   }
-  if (block_buffer_index == SHA256_BLOCK_SIZE_BYTES) {
-    clear_block_buffer();
+  if (block_buffer.buffer_index() == SHA256_BLOCK_SIZE_BYTES) {
+    block_buffer.clear();
   }
-  block_buffer[block_buffer_index++] = 0x80;
-  if (block_buffer_index > SHA256_BLOCK_SIZE_BYTES - SHA256_LENGTH_SIZE_BYTES) {
-    block_hash(block_buffer);
-    clear_block_buffer();
+  block_buffer.add_eod_byte();
+  if (block_buffer.buffer_index() >
+      SHA256_BLOCK_SIZE_BYTES - SHA256_LENGTH_SIZE_BYTES) {
+    block_hash(block_buffer.get_buffer());
+    block_buffer.clear();
   }
-  append_length_to_block_buffer(message.size() * 8);
-  block_hash(block_buffer);
+  block_buffer.append_length(message.size() * 8);
+  block_hash(block_buffer.get_buffer());
   return block_hash.get_digest();
-}
-
-void SHA256::append_length_to_block_buffer(std::uint64_t size) {
-  for (auto it = block_buffer.end() - SHA256_LENGTH_SIZE_BYTES;
-       it != block_buffer.end(); ++it) {
-    *it = (size >> 56) & 0xff;
-    size = size << 8;
-  }
-}
-
-void SHA256::clear_block_buffer() {
-  std::fill(block_buffer.begin(), block_buffer.end(), 0);
-  block_buffer_index = 0;
-}
-void SHA256::update_block_buffer(const std::string& message, std::size_t pos) {
-  if (pos >= message.size()) {
-    throw std::invalid_argument(
-        "update_block_buffer: pos greater than message size");
-  }
-  clear_block_buffer();
-  while ((block_buffer_index < SHA256_BLOCK_SIZE_BYTES) &&
-         (pos < message.size())) {
-    block_buffer[block_buffer_index++] = (std::uint8_t)message[pos++];
-  }
 }
 
 std::vector<std::uint32_t> SHA256::BlockHash::get_digest() const {
   return std::vector<std::uint32_t>{digest.begin(), digest.end()};
 }
-
+void SHA256::BlockHash::set_digest(
+    const std::array<std::uint32_t, 8>& new_digest) {
+  digest = new_digest;
+}
 void SHA256::BlockHash::operator()(const std::vector<std::uint8_t>& block) {
   std::size_t t = 0;
   std::copy(digest.begin(), digest.end(), work_var.begin());

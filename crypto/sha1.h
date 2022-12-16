@@ -7,11 +7,12 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "block_buffer.h"
 
 namespace crypto {
 class SHA1 {
  public:
-  SHA1();
+  //SHA1();
   std::vector<std::uint32_t> get_digest(const std::string& message);
 
  private:
@@ -31,11 +32,12 @@ class SHA1 {
     void operator()(const std::vector<std::uint8_t>& block);
     std::vector<std::uint32_t> get_digest();
   };
-  void update_block_buffer(const std::string& message, std::size_t pos);
-  void clear_block_buffer();
-  void append_length_to_block_buffer(std::uint64_t size);
-  std::vector<std::uint8_t> block_buffer;
-  std::size_t block_buffer_index = 0;
+  //void update_block_buffer(const std::string& message, std::size_t pos);
+  //void clear_block_buffer();
+  //void append_length_to_block_buffer(std::uint64_t size);
+  //std::vector<std::uint8_t> block_buffer;
+  //std::size_t block_buffer_index = 0;
+  BlockBuffer512 block_buffer;
 };
 }  // namespace crypto
 

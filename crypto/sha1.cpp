@@ -3,9 +3,8 @@
 #include "sha1.h"
 #include "util.h"
 #include <algorithm>
-#include <array>
 #include <stdexcept>
-#include <vector>
+
 
 namespace {
 constexpr int SHA1_BLOCK_SIZE_BITS = 512;
@@ -15,7 +14,6 @@ constexpr int SHA1_LENGTH_SIZE_BYTES = SHA1_LENGTH_SIZE_BITS / 8;
 
 }  // namespace
 namespace crypto {
-SHA1::SHA1() : block_buffer(SHA1_BLOCK_SIZE_BYTES){};
 
 std::vector<std::uint32_t> SHA1::get_digest(const std::string& message) {
   if (message.size() > ((uint64_t)1 << 61)) {
@@ -26,46 +24,23 @@ std::vector<std::uint32_t> SHA1::get_digest(const std::string& message) {
   BlockHash block_hash;
   std::size_t pos = 0;
   while (pos < message.size()) {
-    update_block_buffer(message, pos);
-    if (block_buffer_index < SHA1_BLOCK_SIZE_BYTES) break;
-    block_hash(block_buffer);
+    block_buffer.update(message, pos);
+    if (block_buffer.buffer_index() < SHA1_BLOCK_SIZE_BYTES) break;
+    block_hash(block_buffer.get_buffer());
     pos += SHA1_BLOCK_SIZE_BYTES;
   }
-  if (block_buffer_index == SHA1_BLOCK_SIZE_BYTES) {
-    clear_block_buffer();
+  if (block_buffer.buffer_index() == SHA1_BLOCK_SIZE_BYTES) {
+    block_buffer.clear();
   }
-  block_buffer[block_buffer_index++] = 0x80;
-  if (block_buffer_index > SHA1_BLOCK_SIZE_BYTES - SHA1_LENGTH_SIZE_BYTES) {
-    block_hash(block_buffer);
-    clear_block_buffer();
+  block_buffer.add_eod_byte();
+
+  if (block_buffer.buffer_index() > SHA1_BLOCK_SIZE_BYTES - SHA1_LENGTH_SIZE_BYTES) {
+    block_hash(block_buffer.get_buffer());
+    block_buffer.clear();
   }
-  append_length_to_block_buffer(message.size() * 8);
-  block_hash(block_buffer);
+  block_buffer.append_length(message.size() * 8);
+  block_hash(block_buffer.get_buffer());
   return block_hash.get_digest();
-}
-
-void SHA1::append_length_to_block_buffer(std::uint64_t size) {
-  for (auto it = block_buffer.end() - SHA1_LENGTH_SIZE_BYTES;
-       it != block_buffer.end(); ++it) {
-    *it = (size >> 56) & 0xff;
-    size = size << 8;
-  }
-}
-
-void SHA1::clear_block_buffer() {
-  std::fill(block_buffer.begin(), block_buffer.end(), 0);
-  block_buffer_index = 0;
-}
-void SHA1::update_block_buffer(const std::string& message, std::size_t pos) {
-  if (pos >= message.size()) {
-    throw std::invalid_argument(
-        "update_block_buffer: pos greater than message size");
-  }
-  clear_block_buffer();
-  while ((block_buffer_index < SHA1_BLOCK_SIZE_BYTES) &&
-         (pos < message.size())) {
-    block_buffer[block_buffer_index++] = (std::uint8_t)message[pos++];
-  }
 }
 
 void SHA1::BlockHash::operator()(const std::vector<std::uint8_t>& block) {

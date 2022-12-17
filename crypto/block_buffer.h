@@ -25,7 +25,7 @@ class BlockBuffer1024 {
   BlockBuffer1024();
   void update(const std::string& message, std::size_t pos);
   void clear();
-  void append_length(std::uint64_t size);
+  void append_length(std::uint64_t size_msb, std::uint64_t size_lsb);
   void add_eod_byte();
   std::size_t buffer_index() const;
   const std::vector<std::uint8_t>& get_buffer() const;

@@ -43,12 +43,16 @@ const std::vector<std::uint8_t>& BlockBuffer512::get_buffer() const {
 
 BlockBuffer1024::BlockBuffer1024() : buffer(BLOCK_SIZE_BYTES) {}
 
-void BlockBuffer1024::append_length(std::uint64_t size) {
+void BlockBuffer1024::append_length(std::uint64_t size_msb, std::uint64_t size_lsb) {
+    std::uint64_t size = size_msb;
   for (auto it = buffer.end() - 16; it != buffer.end(); ++it) {
+      if (it == buffer.end() - 8) {
+          size = size_lsb;
+      }
     *it = (size >> 56) & 0xff;
     size = size << 8;
   }
-  _buffer_index += 8;
+  _buffer_index += 16;
 }
 
 void BlockBuffer1024::clear() {

@@ -15,7 +15,7 @@ constexpr int SHA256_LENGTH_SIZE_BYTES = SHA256_LENGTH_SIZE_BITS / 8;
 }  // namespace
 
 namespace crypto {
-// SHA256::SHA256() : block_buffer(SHA256_BLOCK_SIZE_BYTES){};
+
 SHA256::SHA256(const std::array<std::uint32_t, 8>& initial_digest) {
   block_hash.set_digest(initial_digest);
 }
